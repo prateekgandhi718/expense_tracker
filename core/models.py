@@ -12,7 +12,7 @@ class Expense(Base):
     category = models.CharField(max_length = 100)
     date = models.DateField()
     amount = models.FloatField()
-    comments = models.CharField()
+    comments = models.CharField(max_length = 100)
     reciept = models.ImageField(blank = True, null = True)
 
     class Meta:
