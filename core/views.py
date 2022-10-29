@@ -4,7 +4,8 @@ from core.models import Expense
 from core.serializers import ExpenseSerializer, ExpenseSerializerWithoutReciept
 from utils.azure_file_controller import upload_file_to_blob
 
-from utils.common import bad_request_response, success_response
+from utils.common import bad_request_response, not_found_response, success_response
+from datetime import date, timedelta
 
 # Create your views here.
 class ExpenseAPIView(APIView):
@@ -27,4 +28,71 @@ class ExpenseAPIView(APIView):
                 return success_response(data = [], message="Expense recorded successfully")
             else:
                 return bad_request_response(data = serializer.errors, message = "Bad request")
+    
+    def get(self, request):
+        filter = request.GET.get('filter')
+        response = {
+                'expenses' : []
+            }
+        if filter == 'all':
+            objs = Expense.objects.all()
+        elif filter == 'pending':
+            objs = Expense.objects.filter(status = 'pending')
+        elif filter == 'approved':
+            objs = Expense.objects.filter(status = 'approved')
+        elif filter == 'rejected':
+            objs = Expense.objects.filter(status = 'rejected')
+        else:
+            #get for approvers
+            start_date = date.today()
+            end_date = start_date + timedelta(days=-30)
+            objs = Expense.objects.filter(amount__gte = 500, date__range = [end_date, start_date])
+            print(f"Start date is {start_date} and end date is {end_date}")
         
+        if objs:
+            for obj in objs:
+                response['expenses'].append(
+                    {
+                        'category' : obj.category,
+                        'date' : obj.date,
+                        'amount' : obj.amount,
+                        'comments' : obj.comments,
+                        'reciept' : obj.reciept if obj.reciept else None,
+                        'status' : obj.status
+                    }
+                )
+            return success_response(data = response['expenses'], message='success')
+        else:
+            return not_found_response(data = [], message='Not found')
+        
+class ExpenseDetailAPIView(APIView):
+    def get(self, request):
+        exp_id = request.GET.get('id')
+        try:
+            obj = Expense.objects.get(id = exp_id)
+            response = {
+                'category' : obj.category,
+                'date' : obj.date,
+                'amount' : obj.amount,
+                'comments' : obj.comments,
+                'reciept' : obj.reciept if obj.reciept else None,
+                'status' : obj.status
+            }
+            return success_response(data = response, message = 'Found successfully')
+        except:
+            return not_found_response(data = [], message='Not found')
+
+class ApprovalRejectionAPIView(APIView):
+    def post(self, request):
+        exp_id = request.GET.get('id')
+        operation = request.GET.get('operation')
+        comments = request.data.get('comments')
+        try:
+            obj = Expense.objects.get(id = exp_id)
+            if operation == 'approve':
+                Expense.objects.filter(id = exp_id).update(status = 'approved', comments = comments)
+            else:
+                Expense.objects.filter(id = exp_id).update(status = 'rejected', comments = comments)
+            return success_response(data = [], message = f"Expense has been {operation}d successfully")
+        except:
+            return not_found_response(data = [], message='Not found')
