@@ -131,3 +131,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AZURE_STORAGE_ACCOUNT = 'https://assessmentstgacc.blob.core.windows.net/?sv=2021-06-08&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2099-10-29T17:49:27Z&st=2022-10-29T09:49:27Z&spr=https,http&sig=nbSZzZv9SIq%2BD6wWtdWq%2F23toSYhOVmwT0ayFhBRX%2BU%3D'
+AZURE_APP_BLOB_NAME = 'prateek-expenses-container'
+AZURE_BLOB_PATH = 'https://assessmentstgacc.blob.core.windows.net/prateek-expenses-container/'
