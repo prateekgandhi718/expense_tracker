@@ -14,6 +14,7 @@ class Expense(Base):
     amount = models.FloatField()
     comments = models.CharField(max_length = 100)
     reciept = models.ImageField(blank = True, null = True)
+    status = models.CharField(max_length = 50, default = 'pending')
 
     class Meta:
         managed = True
