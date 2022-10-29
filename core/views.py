@@ -15,7 +15,7 @@ class ExpenseAPIView(APIView):
             if serializer.is_valid():
                 new_image_name = upload_file_to_blob(request.data.get('reciept')) #this uploads the incoming image to storage account
                 request.data.get('reciept').name = new_image_name #this sets the incoming picture name to new name
-                Expense(category = request.data.get('category'), date = request.data.get('date'), amount = request.data.get('amount'), comments = request.data.get('comments'), reciept = request.data.get('reciept')).save()
+                Expense(category = request.data.get('category'), date = request.data.get('date'), amount = request.data.get('amount'), comments = request.data.get('comments'), reciept = request.data.get('reciept'), status = 'pending').save()
                 return success_response(data = [], message="Expense recorded successfully")
                 
             else:
@@ -23,7 +23,7 @@ class ExpenseAPIView(APIView):
         else:
             serializer = ExpenseSerializerWithoutReciept(data = request.data)
             if serializer.is_valid():
-                Expense(category = request.data.get('category'), date = request.data.get('date'), amount = request.data.get('amount'), comments = request.data.get('comments')).save()
+                Expense(category = request.data.get('category'), date = request.data.get('date'), amount = request.data.get('amount'), comments = request.data.get('comments'), status = 'pending').save()
                 return success_response(data = [], message="Expense recorded successfully")
             else:
                 return bad_request_response(data = serializer.errors, message = "Bad request")
