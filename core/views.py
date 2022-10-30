@@ -34,8 +34,11 @@ class ExpenseAPIView(APIView):
         response = {
                 'expenses' : []
             }
-        if filter == 'all':
-            objs = Expense.objects.all()
+        if filter == 'approver':
+            #get for approvers
+            start_date = date.today()
+            end_date = start_date + timedelta(days=-30)
+            objs = Expense.objects.filter(amount__gte = 500, date__range = [end_date, start_date])
         elif filter == 'pending':
             objs = Expense.objects.filter(status = 'pending')
         elif filter == 'approved':
@@ -43,21 +46,18 @@ class ExpenseAPIView(APIView):
         elif filter == 'rejected':
             objs = Expense.objects.filter(status = 'rejected')
         else:
-            #get for approvers
-            start_date = date.today()
-            end_date = start_date + timedelta(days=-30)
-            objs = Expense.objects.filter(amount__gte = 500, date__range = [end_date, start_date])
-            print(f"Start date is {start_date} and end date is {end_date}")
+            objs = Expense.objects.all()
         
         if objs:
             for obj in objs:
                 response['expenses'].append(
                     {
+                        'id' : obj.id,
                         'category' : obj.category,
                         'date' : obj.date,
                         'amount' : obj.amount,
                         'comments' : obj.comments,
-                        'reciept' : obj.reciept if obj.reciept else None,
+                        'reciept' : obj.reciept.url if obj.reciept else None,
                         'status' : obj.status
                     }
                 )
@@ -71,11 +71,12 @@ class ExpenseDetailAPIView(APIView):
         try:
             obj = Expense.objects.get(id = exp_id)
             response = {
+                'id' : obj.id,
                 'category' : obj.category,
                 'date' : obj.date,
                 'amount' : obj.amount,
                 'comments' : obj.comments,
-                'reciept' : obj.reciept if obj.reciept else None,
+                'reciept' : obj.reciept.url if obj.reciept else None,
                 'status' : obj.status
             }
             return success_response(data = response, message = 'Found successfully')
