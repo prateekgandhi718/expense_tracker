@@ -3,9 +3,14 @@ from rest_framework.views import APIView
 from core.models import Expense
 from core.serializers import ExpenseSerializer, ExpenseSerializerWithoutReciept
 from utils.azure_file_controller import upload_file_to_blob
+from azure.storage.queue import QueueClient, BinaryBase64EncodePolicy, BinaryBase64DecodePolicy
+import json
 
 from utils.common import bad_request_response, not_found_response, success_response
 from datetime import date, timedelta
+
+#Initialising queue client.
+queue_client = QueueClient.from_connection_string(conn_str='DefaultEndpointsProtocol=https;AccountName=assessmentstgacc;AccountKey=eiyYAT6BkNDxxQ1KSFDEjkJ87GXUvAqO1By/bW1m0WTN0MWp5PSFrDYw0lAfHza17CCpUEYYTNhp+AStufDnyw==;EndpointSuffix=core.windows.net', queue_name="prateek-queue", message_encode_policy = BinaryBase64EncodePolicy(), message_decode_policy = BinaryBase64DecodePolicy())
 
 # Create your views here.
 class ExpenseAPIView(APIView):
@@ -17,6 +22,10 @@ class ExpenseAPIView(APIView):
                 new_image_name = upload_file_to_blob(request.data.get('reciept')) #this uploads the incoming image to storage account
                 request.data.get('reciept').name = new_image_name #this sets the incoming picture name to new name
                 Expense(category = request.data.get('category'), date = request.data.get('date'), amount = request.data.get('amount'), comments = request.data.get('comments'), reciept = request.data.get('reciept'), status = 'pending').save()
+                #queue sdk and operations.
+                latest_obj_id = str(Expense.objects.latest('id').id)
+                latest_obj_id_bytes = latest_obj_id.encode('ascii')
+                queue_client.send_message(latest_obj_id_bytes)
                 return success_response(data = [], message="Expense recorded successfully")
                 
             else:
@@ -25,6 +34,10 @@ class ExpenseAPIView(APIView):
             serializer = ExpenseSerializerWithoutReciept(data = request.data)
             if serializer.is_valid():
                 Expense(category = request.data.get('category'), date = request.data.get('date'), amount = request.data.get('amount'), comments = request.data.get('comments'), status = 'pending').save()
+                #queue sdk and operations.
+                latest_obj_id = str(Expense.objects.latest('id').id)
+                latest_obj_id_bytes = latest_obj_id.encode('ascii')
+                queue_client.send_message(latest_obj_id_bytes)
                 return success_response(data = [], message="Expense recorded successfully")
             else:
                 return bad_request_response(data = serializer.errors, message = "Bad request")
