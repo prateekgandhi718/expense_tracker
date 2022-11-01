@@ -49,9 +49,7 @@ class ExpenseAPIView(APIView):
             }
         if filter == 'approver':
             #get for approvers
-            start_date = date.today()
-            end_date = start_date + timedelta(days=-30)
-            objs = Expense.objects.filter(amount__gte = 500, date__range = [end_date, start_date])
+            objs = Expense.objects.filter(status = 'pending')
         elif filter == 'pending':
             objs = Expense.objects.filter(status = 'pending')
         elif filter == 'approved':
